@@ -1,0 +1,49 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.14.36203.30 d17.14
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MatrixClient", "MatrixClient\MatrixClient.csproj", "{7CD9A09D-F943-A717-D8B4-1EE3617D2F41}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MatrixClient.Android", "MatrixClient.Android\MatrixClient.Android.csproj", "{511EF5D8-88CA-8CF4-660E-E7D78841C8E2}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MatrixClient.Browser", "MatrixClient.Browser\MatrixClient.Browser.csproj", "{FAF13542-5E1E-29A5-1632-3652762A2664}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MatrixClient.Desktop", "MatrixClient.Desktop\MatrixClient.Desktop.csproj", "{BE5D4179-26B1-A34D-0F77-4511776D7677}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "matrix-dotnet", "..\matrix-dotnet\matrix-dotnet.csproj", "{9C90DF58-DE35-AC74-A285-7F1716F291CD}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{7CD9A09D-F943-A717-D8B4-1EE3617D2F41}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7CD9A09D-F943-A717-D8B4-1EE3617D2F41}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7CD9A09D-F943-A717-D8B4-1EE3617D2F41}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7CD9A09D-F943-A717-D8B4-1EE3617D2F41}.Release|Any CPU.Build.0 = Release|Any CPU
+		{511EF5D8-88CA-8CF4-660E-E7D78841C8E2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{511EF5D8-88CA-8CF4-660E-E7D78841C8E2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{511EF5D8-88CA-8CF4-660E-E7D78841C8E2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{511EF5D8-88CA-8CF4-660E-E7D78841C8E2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FAF13542-5E1E-29A5-1632-3652762A2664}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FAF13542-5E1E-29A5-1632-3652762A2664}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FAF13542-5E1E-29A5-1632-3652762A2664}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FAF13542-5E1E-29A5-1632-3652762A2664}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BE5D4179-26B1-A34D-0F77-4511776D7677}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BE5D4179-26B1-A34D-0F77-4511776D7677}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BE5D4179-26B1-A34D-0F77-4511776D7677}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BE5D4179-26B1-A34D-0F77-4511776D7677}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9C90DF58-DE35-AC74-A285-7F1716F291CD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9C90DF58-DE35-AC74-A285-7F1716F291CD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9C90DF58-DE35-AC74-A285-7F1716F291CD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9C90DF58-DE35-AC74-A285-7F1716F291CD}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {C288D25C-BA04-4BDC-B6B0-8CC787903D01}
+	EndGlobalSection
+EndGlobal
