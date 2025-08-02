@@ -2,19 +2,18 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-             xmlns:vm="clr-namespace:MatrixClient.ViewModels"
-             xmlns:rooms="clr-namespace:MatrixClient.Views.Rooms"
+             xmlns:viewModels="clr-namespace:MatrixClient.ViewModels"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
-             x:Class="MatrixClient.Views.MainView"
-             x:DataType="vm:MainViewModel">
+             x:Class="MatrixClient.Views.Rooms.RoomView"
+             x:DataType="viewModels:RoomViewModel">
     <Design.DataContext>
-        <!-- This only sets the DataContext for the previewer in an IDE,
-         to set the actual DataContext for runtime, set the DataContext property in code (look at App.axaml.cs) -->
-        <vm:MainViewModel />
+
+        <viewModels:RoomViewModel />
     </Design.DataContext>
-    <Grid RowDefinitions="Auto, *" ColumnDefinitions="Auto, *">
-        <Button Content="Connect" Command="{Binding Click}" />
-        <ItemsControl Grid.Row="1" ItemsSource="{Binding Rooms}">
+    
+    <Grid RowDefinitions="Auto,*, Auto" ColumnDefinitions="*,Auto">
+            <TextBlock Text="{Binding RoomId}"></TextBlock>
+        <ItemsControl Grid.Row="1" Grid.ColumnSpan="2" ItemsSource="{ Binding RoomMessages}">
             <ItemsControl.ItemTemplate>
                 <DataTemplate>
                     <Border Margin="0,10,0,0"
@@ -22,15 +21,16 @@
                             BorderBrush="Gray" BorderThickness="1"
                             Padding="5">
                         <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="{Binding RoomId}" />
+                            <TextBlock Text="{Binding  Sender}" />
                             <TextBlock Margin="5 0" FontWeight="Bold"
-                                       Text="{Binding RoomName}" />
-                            <Button Content="Join" Command="{Binding JoinRoom}" />
+                                       Text="{Binding Message}" />
                         </StackPanel>
                     </Border>
                 </DataTemplate>
             </ItemsControl.ItemTemplate>
         </ItemsControl>
-        <rooms:RoomView Grid.RowSpan="2" Grid.Column="1" DataContext="{Binding SelectedRoom}" />
+        <TextBox  Grid.Row="2" Text="{Binding MessageToSend}"></TextBox> 
+        <Button Grid.Row="2" Grid.Column="1" Content="Send" Command="{Binding SendMessage}"/>
+
     </Grid>
 </UserControl>

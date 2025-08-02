@@ -140,6 +140,7 @@ public sealed class PolymorphicPropertyJsonConverter<T> : PolymorphicJsonConvert
 
 		ParameterInfo[] parameters = constructor.GetParameters();
 
+		var test = root.ToString();
 		List<object?> args = [];
 		foreach (var param in parameters) {
 			if (param.Name is null) throw new InvalidOperationException("Nameless parameters not supported");

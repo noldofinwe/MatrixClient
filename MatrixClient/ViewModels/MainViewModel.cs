@@ -9,6 +9,7 @@ using System.Linq;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
+using CommunityToolkit.Mvvm.ComponentModel;
 using Matrix.Business;
 
 namespace MatrixClient.ViewModels;
@@ -18,6 +19,10 @@ public partial class MainViewModel : ViewModelBase
   public string Greeting => "Welcome to Avalonia!";
   private matrix_dotnet.Client.MatrixClient _client;
   public ObservableCollection<RoomViewModel> Rooms { get; set; }
+  
+  [ObservableProperty]
+  private RoomViewModel? _selectedRoom;
+  
   public MainViewModel()
   {
     Rooms = new();
@@ -38,8 +43,7 @@ public partial class MainViewModel : ViewModelBase
       JsonSerializer.SerializeAsync(stream, _client.ToLoginData()).Wait();
     }
 
-    await _client.Sync();
-
+    await SyncMatrixRoomsFirstTimeAsync();
     // foreach (var inviteState in client.InvitiedState)
     // {
     //   var i = new RoomViewModel(inviteState.Key.ToString(),  inviteState.Value);
@@ -82,6 +86,24 @@ public partial class MainViewModel : ViewModelBase
 
   private async Task SyncMatrixRoomsAsync()
   {
+    await _client.Sync(5000);
+
+    // Map updated data to RoomViewModels
+    foreach (var roomKeyValue in _client.JoinedRooms)
+    {
+      var room = Rooms.FirstOrDefault(x => x.RoomId == roomKeyValue.Key.ToString());
+      if (room == null)
+      {
+        room = new RoomViewModel(roomKeyValue.Key.ToString(), _client);
+        Rooms.Add(room);
+      }
+      SelectedRoom = room;
+      await room.ProcessTimeline(roomKeyValue.Value.timeline);
+    }
+  }
+  
+  private async Task SyncMatrixRoomsFirstTimeAsync()
+  {
     await _client.Sync();
 
     // Map updated data to RoomViewModels
@@ -90,11 +112,12 @@ public partial class MainViewModel : ViewModelBase
       var room = Rooms.FirstOrDefault(x => x.RoomId == roomKeyValue.Key.ToString());
       if (room == null)
       {
-        room = new RoomViewModel();
+        room = new RoomViewModel(roomKeyValue.Key.ToString(), _client);
         Rooms.Add(room);
       }
+
+
       await room.ProcessEvents(roomKeyValue.Value);
     }
-    
   }
 }
