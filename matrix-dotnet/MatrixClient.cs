@@ -217,7 +217,7 @@ public class MatrixClient {
 		List<EventWithState> list = new();
 		foreach (var ev in events) {
 			if (ev.IsState) {
-				var key = new StateKey(ev.type, "TODO");
+				var key = new StateKey(ev.type, ev.state_key);
 				if (rewind) {
 					if (ev is not Api.ClientEvent clientEvent) throw new InvalidOperationException("Cannot backwards resolve with stripped state");
 					if (clientEvent.unsigned is null || clientEvent.unsigned.prev_content is null) stateDict = stateDict.Remove(key);

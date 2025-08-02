@@ -6,6 +6,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <PackageId>matrix_csharp</PackageId>
+        <LangVersion>latest</LangVersion>
     <Version>1.0.1</Version>
     <Authors>Greenscreener</Authors>
     <PackageReadmeFile>README.md</PackageReadmeFile>
