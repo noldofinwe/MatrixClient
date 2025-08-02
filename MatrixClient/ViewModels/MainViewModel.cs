@@ -97,7 +97,8 @@ public partial class MainViewModel : ViewModelBase
         room = new RoomViewModel(roomKeyValue.Key.ToString(), _client);
         Rooms.Add(room);
       }
-      SelectedRoom = room;
+
+      room.InvitedRoom = false;
       await room.ProcessTimeline(roomKeyValue.Value.timeline);
     }
   }
@@ -116,8 +117,6 @@ public partial class MainViewModel : ViewModelBase
         Rooms.Add(room);
       }
 
-
-      await room.ProcessEvents(roomKeyValue.Value);
     }
   }
 }

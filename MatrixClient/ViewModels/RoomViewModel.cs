@@ -58,53 +58,8 @@ public partial class RoomViewModel :ObservableRecipient
     private bool _isProcessing;
     private readonly matrix_dotnet.Client.MatrixClient _client;
     private ITimelineEvent? _lastPoint; 
-    public async Task EnqueueEvents(IEnumerable<MatrixEvent> events)
-    {
-        foreach (var evt in events)
-            EventQueue.Enqueue(evt);
+ 
 
-        if (!_isProcessing)
-            await ProcessEventQueue(); // kick off processing
-    }
-
-    private async Task ProcessEventQueue()
-    {
-        _isProcessing = true;
-
-        while (EventQueue.TryDequeue(out var evt))
-        {
-            await ProcessEventAsync(evt); // your logic
-        }
-
-        _isProcessing = false;
-    }
-
-
-
-    public async Task ProcessEventAsync(MatrixEvent evt)
-    {
-        if (evt.EventContent is JoinRules)
-        {
-            var joinRules = evt.EventContent as JoinRules;
-            JoinRule = joinRules.join_rule.ToString(); 
-        }
-        else if (evt.EventContent is RoomMember)
-        {
-            var roomMember = evt.EventContent as RoomMember;
-            
-        }
-        else if (evt.EventContent is RoomCreation)
-        {
-            var roomCreation = evt.EventContent as RoomCreation;
-            
-        }
-            
-    }
-
-    public async Task ProcessEvents(ImmutableDictionary<StateKey, EventContent> value)
-    {
-        await EnqueueEvents(value.Select(x => new MatrixEvent { StateKey = x.Key, EventContent = x.Value }));
-    }
 
     public async Task ProcessTimeline(Timeline roomTimeline)
     {
@@ -123,10 +78,13 @@ public partial class RoomViewModel :ObservableRecipient
             {
                 await foreach (var timelineEvent in (await _lastPoint.Next()).EnumerateForward())
                 {
-                    EventWithState ev = timelineEvent.Value;
+                    var ev = timelineEvent.Value;
+                    Console.WriteLine(ev.Event.content);
+                    if (ev.Event.content is RoomMember member)
+                        CheckIfDirectContact(TryGetSender(ev), member);
                     if (ev.Event.content is Message message)
                         RoomMessages.Add(new MessageViewModel
-                            { Message = message.body, Sender = ev.GetSender()?.displayname ?? ev.Event.sender });
+                            { Message = message.body, Sender = TryGetSender(ev) });
 
                     _lastPoint = timelineEvent;
                 }
@@ -135,11 +93,27 @@ public partial class RoomViewModel :ObservableRecipient
 
     }
 
+    private static string? TryGetSender(EventWithState ev)
+    {
+        return ev.GetSender()?.displayname ?? ev.Event.sender;
+    }
+
+    private void CheckIfDirectContact(string? sender, RoomMember? member)
+    {
+        if (member.membership == Membership.invite && member.is_direct != null && member.is_direct.Value)
+        {
+            RoomName = sender;
+        }
+    }
+
     private async Task ProcessTimelineFirstTime(Timeline roomTimeline)
     {
         await foreach (var timelineEvent in roomTimeline.First.EnumerateForward()) {
             EventWithState ev = timelineEvent.Value;
             _lastPoint = timelineEvent;
+            Console.WriteLine(ev.Event.content);
+            if (ev.Event.content is RoomMember member)
+                CheckIfDirectContact(TryGetSender(ev), member);
             if (ev.Event.content is Message message)
                 RoomMessages.Add(new MessageViewModel
                     { Message = message.body, Sender = ev.GetSender()?.displayname ?? ev.Event.sender });
