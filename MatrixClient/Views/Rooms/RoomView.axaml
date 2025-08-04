@@ -11,7 +11,7 @@
     <StackPanel>
       <TextBlock Text="{Binding RoomName}"></TextBlock>
       <TextBlock Text="{Binding Activity}"></TextBlock>
-
+<Button Content="Add As Contact" Command="{Binding AddToRoster}" IsVisible="{Binding InvitedRoom}" />
     </StackPanel>
     <ItemsControl Grid.Row="1" Grid.ColumnSpan="2" ItemsSource="{ Binding RoomMessages}">
       <ItemsControl.ItemTemplate>

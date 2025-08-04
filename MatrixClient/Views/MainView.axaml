@@ -15,7 +15,7 @@
     <Grid RowDefinitions="Auto, *" ColumnDefinitions="Auto, *">
 
       <StackPanel>
-        <Button Content="Connect Matrix" Command="{Binding Click}" />
+       
         <Button Content="Connect Xmpp" Command="{Binding LoginXmpp}" />
       </StackPanel>
         <ListBox Grid.Row="1"

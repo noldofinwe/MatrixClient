@@ -1,11 +1,13 @@
 using System;
 using System.Collections.ObjectModel;
+using System.Linq;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using MatrixClient.Services;
 using XmppDotNet;
 using XmppDotNet.Extensions.Client.Message;
+using XmppDotNet.Extensions.Client.Roster;
 using XmppDotNet.Xmpp.Base;
 
 namespace MatrixClient.ViewModels;
@@ -26,11 +28,11 @@ public partial class RoomViewModel : ObservableRecipient
   {
     RoomId = jid;
     RoomName = jid.Bare.ToString();
-    InvitedRoom = false;
+    InvitedRoom = true;
     _client = client;
   }
 
-  public async Task LoadHistory()
+  public async Task<bool> LoadHistory()
   {
     var result = await _mamService.RequestLastChatMessagesFromArchive(_client, RoomId.Bare, 100);
 
@@ -47,6 +49,7 @@ public partial class RoomViewModel : ObservableRecipient
         RoomMessages.Add(messageViewModel);
       }
     }
+    return result.Messages.Any();
   }
 
 
@@ -71,6 +74,13 @@ public partial class RoomViewModel : ObservableRecipient
   [ObservableProperty]
   private ObservableCollection<MessageViewModel> _roomMessages = new();
   private XmppClient _client;
+
+  [RelayCommand]
+  public async Task AddToRoster()
+  {
+    var result = await _client.AddRosterItemAsync(RoomId);
+    InvitedRoom = false;
+  }
 
   [RelayCommand]
   public async Task SendMessage()
