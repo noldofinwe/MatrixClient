@@ -6,31 +6,31 @@
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:Class="MatrixClient.Views.Rooms.RoomView"
              x:DataType="viewModels:RoomViewModel">
-    <Design.DataContext>
 
-        <viewModels:RoomViewModel />
-    </Design.DataContext>
-    
-    <Grid RowDefinitions="Auto,*, Auto" ColumnDefinitions="*,Auto">
-            <TextBlock Text="{Binding RoomName}"></TextBlock>
-        <ItemsControl Grid.Row="1" Grid.ColumnSpan="2" ItemsSource="{ Binding RoomMessages}">
-            <ItemsControl.ItemTemplate>
-                <DataTemplate>
-                    <Border Margin="0,10,0,0"
-                            CornerRadius="5"
-                            BorderBrush="Gray" BorderThickness="1"
-                            Padding="5">
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="{Binding  Sender}" />
-                            <TextBlock Margin="5 0" FontWeight="Bold"
-                                       Text="{Binding Message}" />
-                        </StackPanel>
-                    </Border>
-                </DataTemplate>
-            </ItemsControl.ItemTemplate>
-        </ItemsControl>
-        <TextBox  Grid.Row="2" Text="{Binding MessageToSend}"></TextBox> 
-        <Button Grid.Row="2" Grid.Column="1" Content="Send" Command="{Binding SendMessage}"/>
+  <Grid RowDefinitions="Auto,*, Auto" ColumnDefinitions="*,Auto">
+    <StackPanel>
+      <TextBlock Text="{Binding RoomName}"></TextBlock>
+      <TextBlock Text="{Binding Activity}"></TextBlock>
 
-    </Grid>
+    </StackPanel>
+    <ItemsControl Grid.Row="1" Grid.ColumnSpan="2" ItemsSource="{ Binding RoomMessages}">
+      <ItemsControl.ItemTemplate>
+        <DataTemplate>
+          <Border Margin="0,10,0,0"
+                  CornerRadius="5"
+                  BorderBrush="Gray" BorderThickness="1"
+                  Padding="5">
+            <StackPanel Orientation="Horizontal">
+              <TextBlock Text="{Binding  Sender}" />
+              <TextBlock Margin="5 0" FontWeight="Bold"
+                         Text="{Binding Message}" />
+            </StackPanel>
+          </Border>
+        </DataTemplate>
+      </ItemsControl.ItemTemplate>
+    </ItemsControl>
+    <TextBox  Grid.Row="2" Text="{Binding MessageToSend}"></TextBox>
+    <Button Grid.Row="2" Grid.Column="1" Content="Send" Command="{Binding SendMessage}"/>
+
+  </Grid>
 </UserControl>

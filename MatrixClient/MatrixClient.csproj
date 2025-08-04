@@ -22,6 +22,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\XmppDotNet\src\XmppDotNet.Extensions\XmppDotNet.Extensions.csproj" />
+    <ProjectReference Include="..\..\XmppDotNet\src\XmppDotNet.Transport.Socket\XmppDotNet.Transport.Socket.csproj" />
+    <ProjectReference Include="..\..\XmppDotNet\src\XmppDotNet\XmppDotNet.csproj" />
     <ProjectReference Include="..\matrix-dotnet\matrix-dotnet.csproj" />
     <ProjectReference Include="..\Matrix.Business\Matrix.Business.csproj" />
     <ProjectReference Include="..\Matrix.Data\Matrix.Data.csproj" />

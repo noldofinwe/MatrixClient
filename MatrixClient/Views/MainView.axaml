@@ -13,7 +13,11 @@
         <vm:MainViewModel />
     </Design.DataContext>
     <Grid RowDefinitions="Auto, *" ColumnDefinitions="Auto, *">
-        <Button Content="Connect" Command="{Binding Click}" />
+
+      <StackPanel>
+        <Button Content="Connect Matrix" Command="{Binding Click}" />
+        <Button Content="Connect Xmpp" Command="{Binding LoginXmpp}" />
+      </StackPanel>
         <ListBox Grid.Row="1"
                  ItemsSource="{Binding Rooms}"
                  SelectedItem="{Binding SelectedRoom, Mode=TwoWay}">
@@ -26,7 +30,7 @@
                         <StackPanel Orientation="Horizontal">
                             <TextBlock Margin="5 0" FontWeight="Bold"
                                        Text="{Binding RoomName}" />
-                            <Button Content="Join" Command="{Binding JoinRoom}" IsVisible="{Binding InvitedRoom}" />
+                            
                         </StackPanel>
                     </Border>
                 </DataTemplate>
