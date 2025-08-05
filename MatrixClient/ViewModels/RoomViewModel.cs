@@ -2,6 +2,7 @@ using System;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
+using Avalonia.Media.Imaging;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using MatrixClient.Services;
@@ -23,6 +24,8 @@ public partial class RoomViewModel : ObservableRecipient
     InvitedRoom = false;
     RoomId = key.Jid;
     RoomName = key.Name ?? key.Jid.Bare.ToString();
+    FriendlyName = key.Jid.Local;
+    Avatar = AvatarService.GetOrCreateAvatar(key.Jid.Bare);
   }
 
   public RoomViewModel(Jid jid, XmppClient client)
@@ -88,10 +91,16 @@ public partial class RoomViewModel : ObservableRecipient
   private string _messageToSend;
 
   [ObservableProperty]
+  private string _friendlyName;
+
+  [ObservableProperty]
   private string _activity;
 
   [ObservableProperty]
   private bool _invitedRoom;
+
+  [ObservableProperty]
+  private Bitmap _avatar;
 
   [ObservableProperty]
   private ObservableCollection<BaseRoomItemViewModel> _roomMessages = new();
