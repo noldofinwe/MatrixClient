@@ -39,14 +39,17 @@ public partial class RoomViewModel : ObservableRecipient
 
     if (result.IsSuccess)
     {
-      foreach(var message in result.Messages)
+      foreach(var forwarded in result.Messages)
       {
-        if(message.From.Bare == _client.Jid.Bare)
+        if(forwarded.Message.From.Bare == _client.Jid.Bare)
         {
           var messageViewModel = new OwnMessageViewModel
           {
-            Message = message.Body,
-            Sender = message.From.Local,
+            Message = forwarded.Message.Body,
+            Sender = forwarded.Message.From.Local,
+            Time = forwarded.Delay?.Stamp.ToString("HH:mm") ?? string.Empty,
+
+            Timestamp = forwarded.Delay?.Stamp
 
           };
           AddRoomMessage(messageViewModel);
@@ -55,9 +58,10 @@ public partial class RoomViewModel : ObservableRecipient
         {
           var messageViewModel = new MessageViewModel
           {
-            Message = message.Body,
-            Sender = message.From.Local,
-
+            Message = forwarded.Message.Body,
+            Sender = forwarded.Message.From.Local,
+            Time = forwarded.Delay?.Stamp.ToString("HH:mm") ?? string.Empty,
+             Timestamp = forwarded.Delay?.Stamp
           };
           AddRoomMessage(messageViewModel);
         }
@@ -138,6 +142,26 @@ public partial class RoomViewModel : ObservableRecipient
 
   public void AddRoomMessage(BaseRoomItemViewModel message)
   {
+     var lastMessage = RoomMessages.LastOrDefault();
+    if(lastMessage != null && lastMessage.Timestamp.HasValue && message.Timestamp != null)
+    {
+
+      if(lastMessage.Timestamp.Value.Day != message.Timestamp.Value.Day)
+      {
+        RoomMessages.Add(new DateViewModel
+        {
+          Message = message.Timestamp.Value.ToString("yyyy-MM-dd")
+        });
+      }
+    }
+    if(lastMessage == null && message.Timestamp != null)
+    {
+      RoomMessages.Add(new DateViewModel
+      {
+        Message = message.Timestamp.Value.ToString("yyyy-MM-dd")
+      });
+    }
     RoomMessages.Add(message);
+
   }
 }

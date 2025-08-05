@@ -14,8 +14,7 @@ namespace MatrixClient.ViewModels.Room
     [ObservableProperty]
     private string _time;
 
-
     [ObservableProperty]
-    private DateTime _timestamp;
+    private DateTime? _timestamp;
   }
 }

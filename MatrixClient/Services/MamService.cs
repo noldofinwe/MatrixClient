@@ -7,6 +7,8 @@ using XmppDotNet;
 using XmppDotNet.Xml;
 using XmppDotNet.Xmpp;
 using XmppDotNet.Xmpp.Client;
+using XmppDotNet.Xmpp.Delay;
+using XmppDotNet.Xmpp.Forward;
 using XmppDotNet.Xmpp.MessageArchiveManagement;
 using XmppDotNet.Xmpp.ResultSetManagement;
 using XmppDotNet.Xmpp.XData;
@@ -61,7 +63,7 @@ namespace MatrixClient.Services
         }
       };
 
-      var messages = new List<Message>();
+      var messages = new List<Forwarded>();
 
       // set up message subscription
       // we look for messages that:
@@ -69,16 +71,16 @@ namespace MatrixClient.Services
       // * are a MAM result messages
       // * are sent from us or the Jid we query for
       var messageSubscription = xmppClient
-          .XmppXElementReceived
-          .Where(el => el is Message { IsMamResult: true } msg
-                  && msg.MamResult.QueryId == mamQuery.Query.QueryId
-                  && (msg.From.EqualsBare(jid) || msg.From.EqualsBare(xmppClient.Jid))
-          )
-          .Select(el => el.Cast<Message>().MamResult)
-          .Subscribe(result =>
-          {
-            messages.Add(result.Forwarded.Message);
-          });
+         .XmppXElementReceived
+         .Where(el => el is Message { IsMamResult: true } msg &&
+                      msg.MamResult.QueryId == mamQuery.Query.QueryId &&
+                      (msg.From.EqualsBare(jid) || msg.From.EqualsBare(xmppClient.Jid)))
+         .Select(el => el.Cast<Message>().MamResult)
+         .Subscribe(result =>
+         {
+           var forwardedMessage = result.Forwarded;
+           messages.Add(forwardedMessage);
+         });
 
 
       var resIq = await xmppClient.SendIqAsync(mamQuery);
@@ -104,11 +106,11 @@ namespace MatrixClient.Services
     public string First { get; set; }
 
     // collection of messages retrieved
-    public ReadOnlyCollection<Message> Messages { get; set; }
+    public ReadOnlyCollection<Forwarded> Messages { get; set; }
 
-    public MamResult WithMessages(List<Message> messages)
+    public MamResult WithMessages(List<Forwarded> messages)
     {
-      Messages = new ReadOnlyCollection<Message>(messages);
+      Messages = new ReadOnlyCollection<Forwarded>(messages);
       return this;
     }
 
