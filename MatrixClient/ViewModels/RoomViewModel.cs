@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using MatrixClient.Services;
+using MatrixClient.ViewModels.Room;
 using XmppDotNet;
 using XmppDotNet.Extensions.Client.Message;
 using XmppDotNet.Extensions.Client.Roster;
@@ -40,15 +41,32 @@ public partial class RoomViewModel : ObservableRecipient
     {
       foreach(var message in result.Messages)
       {
-        var messageViewModel = new MessageViewModel
+        if(message.From.Bare == _client.Jid.Bare)
         {
-          Message = message.Body,
-          Sender = message.From.Local,
+          var messageViewModel = new OwnMessageViewModel
+          {
+            Message = message.Body,
+            Sender = message.From.Local,
+
+          };
+          AddRoomMessage(messageViewModel);
+        }
+        else
+        {
+          var messageViewModel = new MessageViewModel
+          {
+            Message = message.Body,
+            Sender = message.From.Local,
+
+          };
+          AddRoomMessage(messageViewModel);
+        }
+
       
-        };
-        RoomMessages.Add(messageViewModel);
       }
     }
+
+    AddRoomMessage(new DateViewModel { Message = "History" });
     return result.Messages.Any();
   }
 
@@ -72,7 +90,7 @@ public partial class RoomViewModel : ObservableRecipient
   private bool _invitedRoom;
 
   [ObservableProperty]
-  private ObservableCollection<MessageViewModel> _roomMessages = new();
+  private ObservableCollection<BaseRoomItemViewModel> _roomMessages = new();
   private XmppClient _client;
 
   [RelayCommand]
@@ -86,12 +104,13 @@ public partial class RoomViewModel : ObservableRecipient
   public async Task SendMessage()
   {
     if (string.IsNullOrWhiteSpace(MessageToSend)) return;
-    var message = new MessageViewModel
+    var message = new OwnMessageViewModel
     {
       Message = MessageToSend,
-      Sender = _client.Jid.Local.ToString()
+      Sender = _client.Jid.Local.ToString(),
+      Time = DateTime.Now.ToString("HH:mm"),
     };
-    RoomMessages.Add(message);
+    AddRoomMessage(message);
 
     // Here you would send the message to the server
     // await _client.SendMessageAsync(RoomId, MessageToSend);
@@ -105,11 +124,20 @@ public partial class RoomViewModel : ObservableRecipient
     Activity = el.Chatstate.ToString();
     
     if (string.IsNullOrWhiteSpace(el.Body)) return;
+
+
     var message = new MessageViewModel
     {
       Message = el.Body,
-      Sender = _client.Jid.Local.ToString()
+      Sender = _client.Jid.Local.ToString(),
+      Time = DateTime.Now.ToString("HH:mm"),
     };
+    AddRoomMessage(message);
+  }
+
+
+  public void AddRoomMessage(BaseRoomItemViewModel message)
+  {
     RoomMessages.Add(message);
   }
 }
