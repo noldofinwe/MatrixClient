@@ -11,15 +11,15 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Avalonia" Version="$(AvaloniaVersion)" />
-    <PackageReference Include="Avalonia.Themes.Fluent" Version="$(AvaloniaVersion)" />
-    <PackageReference Include="Avalonia.Fonts.Inter" Version="$(AvaloniaVersion)" />
-    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.2.0" />
+    <PackageReference Include="Avalonia" Version="11.3.3" />
+    <PackageReference Include="Avalonia.Themes.Fluent" Version="11.3.3" />
+    <PackageReference Include="Avalonia.Fonts.Inter" Version="11.3.3" />
+    <PackageReference Include="BouncyCastle.Cryptography" Version="2.6.2" />
+    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
 
     <!--Condition below is needed to remove Avalonia.Diagnostics package from build output in Release configuration.-->
-    <PackageReference Condition="'$(Configuration)' == 'Debug'" Include="Avalonia.Diagnostics" Version="$(AvaloniaVersion)" />
+    <PackageReference Condition="'$(Configuration)' == 'Debug'" Include="Avalonia.Diagnostics" Version="11.3.3" />
     <PackageReference Include="Matrix.Sdk" Version="1.0.9" />
-    <PackageReference Include="SkiaSharp" Version="3.119.0" />
   </ItemGroup>
 
   <ItemGroup>
@@ -29,5 +29,11 @@
     <ProjectReference Include="..\matrix-dotnet\matrix-dotnet.csproj" />
     <ProjectReference Include="..\Matrix.Business\Matrix.Business.csproj" />
     <ProjectReference Include="..\Matrix.Data\Matrix.Data.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="SkiaSharp">
+      <HintPath>..\..\..\.nuget\packages\skiasharp\2.88.8\lib\net6.0\SkiaSharp.dll</HintPath>
+    </Reference>
   </ItemGroup>
 </Project>

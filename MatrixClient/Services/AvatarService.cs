@@ -48,23 +48,41 @@ public static class AvatarService
       IsAntialias = true
     };
     canvas.DrawCircle(size / 2, size / 2, size / 2, circlePaint);
-
-
     var textPaint = new SKPaint
     {
       Color = SKColors.White,
-      IsAntialias = true,     
+      IsAntialias = true,
+      TextSize = size / 2,
+      TextAlign = SKTextAlign.Center // Alignment is set on SKPaint
     };
-    var font = new SKFont(SKTypeface.Default, size / 2);
-    var align = SKTextAlign.Center;
 
+// Measure text bounds using SKPaint
+    SKRect bounds = new SKRect();
+    textPaint.MeasureText(initial, ref bounds);
 
-    font.MeasureText(initial, out SKRect bounds, textPaint);
-
+// Calculate position
     float x = size / 2;
     float y = size / 2 - bounds.MidY;
 
-    canvas.DrawText(initial, x, y, align, font, textPaint);
+// Draw text using SKPaint only
+    canvas.DrawText(initial, x, y, textPaint);
+
+    //
+    // var textPaint = new SKPaint
+    // {
+    //   Color = SKColors.White,
+    //   IsAntialias = true,     
+    // };
+    // var font = new SKFont(SKTypeface.Default, size / 2);
+    // var align = SKTextAlign.Center;
+    //
+    //
+    // font.MeasureText(initial, out SKRect bounds, textPaint);
+    //
+    // float x = size / 2;
+    // float y = size / 2 - bounds.MidY;
+    //
+    // canvas.DrawText(initial, x, y, align, font, textPaint);
 
     return bitmap;
   }

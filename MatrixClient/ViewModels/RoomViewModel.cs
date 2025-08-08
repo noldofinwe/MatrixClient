@@ -6,6 +6,7 @@ using Avalonia.Media.Imaging;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using MatrixClient.Services;
+using MatrixClient.Services.Omemo;
 using MatrixClient.ViewModels.Room;
 using XmppDotNet;
 using XmppDotNet.Extensions.Client.Message;
@@ -17,7 +18,7 @@ namespace MatrixClient.ViewModels;
 public partial class RoomViewModel : ObservableRecipient
 {
   private MamService _mamService = new();
-  public RoomViewModel(RosterItem key, XmppClient client)
+  public RoomViewModel(RosterItem key, XmppClient client, OmemoClient omemoClient)
   {
     _mamService = new MamService();
     _client = client;
@@ -26,14 +27,23 @@ public partial class RoomViewModel : ObservableRecipient
     RoomName = key.Name ?? key.Jid.Bare.ToString();
     FriendlyName = key.Jid.Local;
     Avatar = AvatarService.GetOrCreateAvatar(key.Jid.Bare);
+    _omemoClient = omemoClient;
   }
 
-  public RoomViewModel(Jid jid, XmppClient client)
+  public RoomViewModel(Jid jid, XmppClient client, OmemoClient omemoClient)
   {
     RoomId = jid;
     RoomName = jid.Bare.ToString();
     InvitedRoom = true;
     _client = client;
+    _omemoClient = omemoClient;
+  }
+
+  public async Task SetupOmemoSession()
+  {
+    var pubSubManager = new PubSubManager(_client);
+    var bundle = await pubSubManager.GetBundleAsync(RoomId, _omemoClient.DeviceId);
+    _omemoClient.CreateSession(RoomId, bundle);
   }
 
   public async Task<bool> LoadHistory()
@@ -46,6 +56,8 @@ public partial class RoomViewModel : ObservableRecipient
       {
         if(forwarded.Message.From.Bare == _client.Jid.Bare)
         {
+          _omemoClient.HandleMessage((forwarded.Message));
+          
           var messageViewModel = new OwnMessageViewModel
           {
             Message = forwarded.Message.Body,
@@ -105,6 +117,7 @@ public partial class RoomViewModel : ObservableRecipient
   [ObservableProperty]
   private ObservableCollection<BaseRoomItemViewModel> _roomMessages = new();
   private XmppClient _client;
+  private readonly OmemoClient _omemoClient;
 
   [RelayCommand]
   public async Task AddToRoster()

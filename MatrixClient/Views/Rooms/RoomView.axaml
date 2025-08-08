@@ -24,10 +24,10 @@
         </ItemsControl.ItemsPanel>
         <ItemsControl.DataTemplates>
           <DataTemplate x:DataType="{x:Type local:MessageViewModel}">
-            <Border VerticalAlignment="Center" CornerRadius="3"  Padding="5" Background="DarkSlateGray" Opacity="50" HorizontalAlignment="Left">
+            <Border VerticalAlignment="Center" CornerRadius="3"  Padding="5" Background="DarkSlateGray" Opacity="50" MinWidth="100" HorizontalAlignment="Left">
 
 
-              <StackPanel Orientation="Vertical">
+              <StackPanel Orientation="Vertical" >
                 <TextBlock Text="{Binding  Sender}" FontSize="10" />
                 <TextBlock Margin="5 0" FontWeight="Bold"
                            Text="{Binding Message}" />
@@ -36,7 +36,7 @@
             </Border>
           </DataTemplate>
           <DataTemplate DataType="{x:Type local:OwnMessageViewModel}">
-            <Border VerticalAlignment="Center" CornerRadius="3" Padding="5" Background="DarkGreen" Opacity="50" HorizontalAlignment="Right">
+            <Border VerticalAlignment="Center" CornerRadius="3" Padding="5" Background="DarkGreen" Opacity="50" MinWidth="100" HorizontalAlignment="Right">
               <StackPanel Orientation="Vertical" >
                 <TextBlock Text="{Binding  Sender}" FontSize="10" />
                 <TextBlock Margin="5 0" FontWeight="Bold"
