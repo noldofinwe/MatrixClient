@@ -81,7 +81,7 @@ public class PubSubManager
             var pub = new PubSub();
             pub.Items = new Items
             {
-                Node = $"eu.siacs.conversations.axolotl.devicelist:{deviceId}"
+                Node = $"eu.siacs.conversations.axolotl.bundles:{deviceId}"
             };
 
             var iq = new PubSubIq
@@ -101,9 +101,9 @@ public class PubSubManager
                 Console.WriteLine($"Device {deviceId} not found: {errorText}");
                 continue;
             }
-
-
+            
             var bundle = response?
+                .Element(pubsubNs + "pubsub")?
                 .Element(pubsubNs + "items")?
                 .Element(pubsubNs + "item")?
                 .Element(axolotlNs + "bundle");
@@ -116,12 +116,15 @@ public class PubSubManager
                 IdentityKey = bundle.Element(axolotlNs + "identityKey")?.Value,
                 SignedPreKey = bundle.Element(axolotlNs + "signedPreKeyPublic")?.Value,
                 //SignedPreKeySignature = bundle.Element(axolotlNs + "signedPreKeySignature")?.Value,
-                PreKeys = bundle.Elements(axolotlNs + "preKeyPublic")
+                PreKeys = bundle
+                    .Element(axolotlNs + "prekeys")?
+                    .Elements(axolotlNs + "preKeyPublic")
                     .Select(e => e.Value)
                     .ToList()
             };
 
             bundles.Add(parsed);
+
         }
 
         return bundles;
