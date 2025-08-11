@@ -38,7 +38,7 @@ public class PubSubManager
             .ToList() ?? new List<int>();
     }
 
-    public async Task<OmemoContactKeyBundle> GetBundleAsync(Jid contactJid, int deviceId)
+    public async Task<List<OmemoContactKeyBundle>> GetBundleAsync(Jid contactJid, int deviceId)
     {
         var node = $"eu.siacs.conversations.axolotl.bundles:{deviceId}";
         var iq = CreatePubSubIq(contactJid, node);
@@ -67,7 +67,7 @@ public class PubSubManager
             .ToList();
 
         var bundles = await FetchOmemoBundlesAsync(contactJid, deviceIds);
-        return bundles?.FirstOrDefault();
+        return bundles;
     }
 
     public async Task<List<OmemoContactKeyBundle>> FetchOmemoBundlesAsync(Jid contactJid, List<string> deviceIds)

@@ -3,6 +3,7 @@ using Org.BouncyCastle.Crypto.Parameters;
 using Org.BouncyCastle.Security;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Xml.Linq;
 using Org.BouncyCastle.Asn1.X9;
 using Org.BouncyCastle.Crypto.Generators;
@@ -75,39 +76,53 @@ public class OmemoKeyBundle
     {
         return ((ECPublicKeyParameters)keyPair.Public).Q.GetEncoded();
     }
-    public static OmemoKeyBundle FromXml(XElement xml)
-    {
-        var bundle = new OmemoKeyBundle();
+    // public static OmemoKeyBundle FromXml(XElement xml)
+    // {
+    //     var bundle = new OmemoKeyBundle();
+    //
+    //     var identityKeyBase64 = xml.Element("identityKey")?.Value;
+    //     var signedPreKeyElement = xml.Element("signedPreKeyPublic");
+    //     var signatureBase64 = xml.Element("signedPreKeySignature")?.Value;
+    //
+    //     bundle.IdentityKey = ParsePublicKey(identityKeyBase64);
+    //     bundle.SignedPreKey = ParsePublicKey(signedPreKeyElement?.Value);
+    //     bundle.SignedPreKeySignature = Convert.FromBase64String(signatureBase64);
+    //
+    //     var prekeys = xml.Element("prekeys")?.Elements("preKeyPublic");
+    //     bundle.OneTimePreKeys = new List<AsymmetricCipherKeyPair>();
+    //     foreach (var pk in prekeys)
+    //     {
+    //         var key = ParsePublicKey(pk.Value);
+    //         bundle.OneTimePreKeys.Add(key); // No private key
+    //     }
+    //
+    //     return bundle;
+    // }
 
-        var identityKeyBase64 = xml.Element("identityKey")?.Value;
-        var signedPreKeyElement = xml.Element("signedPreKeyPublic");
-        var signatureBase64 = xml.Element("signedPreKeySignature")?.Value;
-
-        bundle.IdentityKey = ParsePublicKey(identityKeyBase64);
-        bundle.SignedPreKey = ParsePublicKey(signedPreKeyElement?.Value);
-        bundle.SignedPreKeySignature = Convert.FromBase64String(signatureBase64);
-
-        var prekeys = xml.Element("prekeys")?.Elements("preKeyPublic");
-        bundle.OneTimePreKeys = new List<AsymmetricCipherKeyPair>();
-        foreach (var pk in prekeys)
-        {
-            var key = ParsePublicKey(pk.Value);
-            bundle.OneTimePreKeys.Add(key); // No private key
-        }
-
-        return bundle;
-    }
-
-    public static AsymmetricCipherKeyPair ParsePublicKey(string base64)
+    public static X25519PublicKeyParameters ParsePublicKey(string base64)
     {
         byte[] keyBytes = Convert.FromBase64String(base64);
 
-        // X25519 public key (32 bytes)
-        var publicKey = new X25519PublicKeyParameters(keyBytes, 0);
+        if (keyBytes.Length == 33 && keyBytes[0] == 0x05)
+            keyBytes = keyBytes.Skip(1).ToArray();
 
-        // No private key available from contact's bundle
-        return new AsymmetricCipherKeyPair(publicKey, null);
+        if (keyBytes.Length != 32)
+            throw new ArgumentException("Invalid X25519 public key length");
+
+        return new X25519PublicKeyParameters(keyBytes, 0);
     }
+
+    //
+    // public static AsymmetricCipherKeyPair ParsePublicKey(string base64)
+    // {
+    //     byte[] keyBytes = Convert.FromBase64String(base64);
+    //
+    //     // X25519 public key (32 bytes)
+    //     var publicKey = new X25519PublicKeyParameters(keyBytes, 0);
+    //
+    //     // No private key available from contact's bundle
+    //     return new AsymmetricCipherKeyPair(publicKey, null);
+    // }
 
     
     public static AsymmetricCipherKeyPair GenerateKeyPairFull()

@@ -53,13 +53,21 @@ public class X3DHAgreement
         return DeriveSharedSecret(combined);
     }
 
-    private byte[] PerformDH(AsymmetricKeyParameter privateKey, AsymmetricKeyParameter publicKey)
+    public static byte[] PerformDH(AsymmetricKeyParameter privateKey, AsymmetricKeyParameter publicKey)
     {
-        var agreement = new ECDHBasicAgreement();
-        agreement.Init(privateKey);
-        var sharedSecret = agreement.CalculateAgreement(publicKey);
-        return sharedSecret.ToByteArrayUnsigned();
+        if (privateKey is X25519PrivateKeyParameters xPriv && publicKey is X25519PublicKeyParameters xPub)
+        {
+            var agreement = new X25519Agreement();
+            agreement.Init(xPriv);
+
+            byte[] sharedSecret = new byte[agreement.AgreementSize];
+            agreement.CalculateAgreement(xPub, sharedSecret, 0);
+            return sharedSecret;
+        }
+
+        throw new ArgumentException("PerformDH expects X25519 key parameters");
     }
+
 
     private byte[] CombineDhResults(List<byte[]> dhResults)
     {

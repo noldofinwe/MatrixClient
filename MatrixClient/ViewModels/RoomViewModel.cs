@@ -42,8 +42,12 @@ public partial class RoomViewModel : ObservableRecipient
   public async Task SetupOmemoSession()
   {
     var pubSubManager = new PubSubManager(_client);
-    var bundle = await pubSubManager.GetBundleAsync(RoomId, _omemoClient.DeviceId);
-    _omemoClient.CreateSession(RoomId, bundle);
+    var bundles = await pubSubManager.GetBundleAsync(RoomId, _omemoClient.DeviceId);
+    foreach (var bundle in bundles)
+    {
+      _omemoClient.CreateSession(RoomId, bundle);
+
+    }
   }
 
   public async Task<bool> LoadHistory()

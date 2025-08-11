@@ -36,8 +36,8 @@ public class SessionManager
             // Perform X3DH
             var sharedSecret = new X3DHAgreement().PerformX3DH(
                 senderEphemeralKey,
-                OmemoKeyBundle.ParsePublicKey(contactBundle.IdentityKey).Public,
-                OmemoKeyBundle.ParsePublicKey(contactBundle.SignedPreKey).Public, 
+                OmemoKeyBundle.ParsePublicKey(contactBundle.IdentityKey),
+                OmemoKeyBundle.ParsePublicKey(contactBundle.SignedPreKey), 
                 null // optional
             );
 
@@ -55,7 +55,8 @@ public class SessionManager
         string key = $"{contactJid}:{deviceId}";
 
         if (!sessions.TryGetValue(key, out var session))
-            throw new InvalidOperationException("No session found for contact/device");
+            return null;
+            //throw new InvalidOperationException("No session found for contact/device");
 
         return session.Decrypt(ciphertext);
     }
