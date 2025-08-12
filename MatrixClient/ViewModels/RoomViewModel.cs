@@ -60,7 +60,6 @@ public partial class RoomViewModel : ObservableRecipient
       {
         if(forwarded.Message.From.Bare == _client.Jid.Bare)
         {
-          _omemoClient.HandleMessage((forwarded.Message));
           
           var messageViewModel = new OwnMessageViewModel
           {
@@ -75,6 +74,8 @@ public partial class RoomViewModel : ObservableRecipient
         }
         else
         {
+          await _omemoClient.HandleMessage((forwarded.Message));
+
           var messageViewModel = new MessageViewModel
           {
             Message = forwarded.Message.Body,

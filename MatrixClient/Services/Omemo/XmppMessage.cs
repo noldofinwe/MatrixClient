@@ -1,11 +1,12 @@
 using System.Xml.Linq;
+using XmppDotNet;
 using XmppDotNet.Xmpp.Base;
 
 namespace MatrixClient.Services.Omemo;
 
 public class XmppMessage
 {
-    public string From { get; set; }
+    public Jid From { get; set; }
     public string Body { get; set; }
     public string EncryptedPayload { get; set; }
     public bool OmemoEncrypted { get; set; }
@@ -15,7 +16,7 @@ public class XmppMessage
     {
         return new XmppMessage
         {
-            From = msg.From.ToString(),
+            From = msg.From,
             Body = msg.Body,
             OmemoEncrypted = IsOmemoEncrypted(msg),
             EncryptedPayload = GetOmemoPayload(msg),
