@@ -1,63 +1,70 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using XmppDotNet;
 
 namespace MatrixClient.Services.Omemo;
 
 public class SessionManager
 {
-    public SessionManager(OmemoKeyBundle myBundle)
+  public SessionManager(OmemoKeyBundle myBundle)
+  {
+    this.myBundle = myBundle;
+  }
+  private Dictionary<string, DoubleRatchetSession> sessions = new();
+  private readonly OmemoKeyBundle myBundle;
+
+  public void StoreSession(string jid, int deviceId, DoubleRatchetSession session)
+  {
+    sessions[$"{jid}:{deviceId}"] = session;
+  }
+
+  public DoubleRatchetSession GetSession(int deviceId)
+  {
+    return sessions.Values.FirstOrDefault(s => s.RemoteDeviceId == deviceId);
+  }
+
+
+  public DoubleRatchetSession GetOrCreateSession(string contactJid, OmemoContactKeyBundle contactBundle)
+  {
+    string key = $"{contactJid}:{contactBundle.DeviceId}";
+
+    if (!sessions.TryGetValue(key, out var session))
     {
-        this.myBundle = myBundle;
-    }
-    private Dictionary<string, DoubleRatchetSession> sessions = new();
-    private readonly OmemoKeyBundle myBundle;
-    
-    public void StoreSession(string jid, int deviceId, DoubleRatchetSession session)
-    {
-        sessions[$"{jid}:{deviceId}"] = session;
-    }
+      // Generate ephemeral key pair
+      var senderEphemeralKey = OmemoKeyBundle.GenerateEphemeralKey();
 
-    public DoubleRatchetSession GetSession(int deviceId)
-    {
-        return sessions.Values.FirstOrDefault(s => s.RemoteDeviceId == deviceId);
-    }
-    
+      // Perform X3DH
+      var sharedSecret = new X3DHAgreement().PerformX3DH(
+          senderEphemeralKey,
+          OmemoKeyBundle.ParsePublicKey(contactBundle.IdentityKey),
+          OmemoKeyBundle.ParsePublicKey(contactBundle.SignedPreKey),
+          null // optional
+      );
 
-    public DoubleRatchetSession GetOrCreateSession(string contactJid, int deviceId, OmemoContactKeyBundle contactBundle)
-    {
-        string key = $"{contactJid}:{deviceId}";
-
-        if (!sessions.TryGetValue(key, out var session))
-        {
-            // Generate ephemeral key pair
-            var senderEphemeralKey = OmemoKeyBundle.GenerateEphemeralKey();
-
-            // Perform X3DH
-            var sharedSecret = new X3DHAgreement().PerformX3DH(
-                senderEphemeralKey,
-                OmemoKeyBundle.ParsePublicKey(contactBundle.IdentityKey),
-                OmemoKeyBundle.ParsePublicKey(contactBundle.SignedPreKey), 
-                null // optional
-            );
-
-            // Initialize Double Ratchet session
-            session = new DoubleRatchetSession(sharedSecret, deviceId, null);
-            sessions[key] = session;
-        }
-
-        return session;
+      // Initialize Double Ratchet session
+      session = new DoubleRatchetSession(sharedSecret, contactBundle.DeviceId, null);
+      sessions[key] = session;
     }
 
-    
-    public string Decrypt(string contactJid, int deviceId, string ciphertext)
-    {
-        string key = $"{contactJid}:{deviceId}";
+    return session;
+  }
 
-        if (!sessions.TryGetValue(key, out var session))
-            return null;
-            //throw new InvalidOperationException("No session found for contact/device");
 
-        return session.Decrypt(ciphertext);
-    }
+  public string Decrypt(Jid contactJid, int deviceId, string ciphertext)
+  {
+    string key = $"{contactJid.Bare}:{deviceId}";
+
+    if (!sessions.TryGetValue(key, out var session))
+      return null;
+    //throw new InvalidOperationException("No session found for contact/device");
+
+    return session.Decrypt(ciphertext);
+  }
+
+  internal bool HasSession(Jid contactJid, int deviceId)
+  {
+    string key = $"{contactJid.Bare}:{deviceId}";
+    return sessions.ContainsKey(key);
+  }
 }
