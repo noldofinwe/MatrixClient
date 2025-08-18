@@ -1,0 +1,335 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
+using Logging;
+using XmppApi.Events;
+using XmppApi.Network;
+using XmppApi.Network.Events;
+using XmppApi.Network.XML;
+using XmppApi.Network.XML.Messages;
+using XmppApi.Network.XML.Messages.XEP_0045;
+using XmppApi.Network.XML.Messages.XEP_0060;
+using XmppApi.Network.XML.Messages.XEP_0085;
+using XmppApi.Network.XML.Messages.XEP_0184;
+using XmppApi.Network.XML.Messages.XEP_0384;
+
+namespace XmppApi
+{
+    public class XMPPClient: IMessageSender, IDisposable
+    {
+        //--------------------------------------------------------Attributes:-----------------------------------------------------------------\\
+        #region --Attributes--
+        public XmppConnection connection
+        {
+            get;
+            private set;
+        }
+
+        private bool holdConnection = false;
+        private const int RECONNECT_DELAY = 15000; // 15 second reconnect delay
+        private TimeSpan reconnectDelay = TimeSpan.FromMilliseconds(RECONNECT_DELAY);
+
+        public delegate void ConnectionStateChangedEventHandler(XMPPClient client, ConnectionStateChangedEventArgs args);
+        public delegate void NewChatMessageEventHandler(XMPPClient client, NewChatMessageEventArgs args);
+        public delegate void NewPresenceEventHandler(XMPPClient client, NewPresenceMessageEventArgs args);
+        public delegate void NewChatStateEventHandler(XMPPClient client, NewChatStateEventArgs args);
+        public delegate void MessageSendEventHandler(XMPPClient client, MessageSendEventArgs args);
+        public delegate void NewBookmarksResultMessageEventHandler(XMPPClient client, NewBookmarksResultMessageEventArgs args);
+        public delegate void NewMUCMemberPresenceMessageEventHandler(XMPPClient client, NewMUCMemberPresenceMessageEventArgs args);
+        public delegate void NewMUCPresenceErrorMessageEventHandler(XMPPClient client, NewMUCPresenceErrorMessageEventArgs args);
+        public delegate void NewDeliveryReceiptHandler(XMPPClient client, NewDeliveryReceiptEventArgs args);
+        public delegate void NewPubSubEventHandler(XMPPClient client, NewPubSubEventEventArgs args);
+        public delegate void OmemoSessionBuildErrorEventHandler(XMPPClient client, OmemoSessionBuildErrorEventArgs args);
+
+        public event NewValidMessageEventHandler NewRoosterMessage;
+        public event ConnectionStateChangedEventHandler ConnectionStateChanged;
+        public event NewChatMessageEventHandler NewChatMessage;
+        public event NewPresenceEventHandler NewPresence;
+        public event NewChatStateEventHandler NewChatState;
+        public event MessageSendEventHandler MessageSend;
+        public event NewMUCMemberPresenceMessageEventHandler NewMUCMemberPresenceMessage;
+        public event NewMUCPresenceErrorMessageEventHandler NewMUCPresenceErrorMessage;
+        public event NewValidMessageEventHandler NewValidMessage;
+        public event NewBookmarksResultMessageEventHandler NewBookmarksResultMessage;
+        public event NewDeliveryReceiptHandler NewDeliveryReceipt;
+        public event NewPubSubEventHandler NewPubSubEvent;
+        public event OmemoSessionBuildErrorEventHandler OmemoSessionBuildError;
+
+        public GeneralCommandHelper GENERAL_COMMAND_HELPER => connection.GENERAL_COMMAND_HELPER;
+        public MUCCommandHelper MUC_COMMAND_HELPER => connection.MUC_COMMAND_HELPER;
+        public PubSubCommandHelper PUB_SUB_COMMAND_HELPER => connection.PUB_SUB_COMMAND_HELPER;
+        public OmemoCommandHelper OMEMO_COMMAND_HELPER => connection.OMEMO_COMMAND_HELPER;
+
+        private TaskCompletionSource<bool> connectDisconnectTCS;
+
+        #endregion
+        //--------------------------------------------------------Constructor:----------------------------------------------------------------\\
+        #region --Constructors--
+        public XMPPClient(XMPPAccount account)
+        {
+            init(account);
+        }
+
+        #endregion
+        //--------------------------------------------------------Set-, Get- Methods:---------------------------------------------------------\\
+        #region --Set-, Get- Methods--
+        public bool isConnected()
+        {
+            return connection != null && connection.state == ConnectionState.CONNECTED;
+        }
+
+        public ConnectionState getConnetionState()
+        {
+            return connection.state;
+        }
+
+        public MessageParserStats getMessageParserStats()
+        {
+            return connection?.GetMessageParserStats();
+        }
+
+        public ConnectionError getLastConnectionError()
+        {
+            return connection.lastConnectionError;
+        }
+
+        public OmemoHelper getOmemoHelper()
+        {
+            return connection.omemoHelper;
+        }
+
+        /// <summary>
+        /// Sets the given XMPPAccount.
+        /// Make sure you call disconnectAsyc() before to prevent memory leaks!
+        /// </summary>
+        /// <param name="account">The new XMPPAccount.</param>
+        public void setAccount(XMPPAccount account)
+        {
+            // Cleanup old connection:
+            if (connection != null)
+            {
+                switch (connection.state)
+                {
+                    case ConnectionState.CONNECTING:
+                    case ConnectionState.CONNECTED:
+                        throw new InvalidOperationException("Unable to set account, if the client is still connecting or connected! state = " + connection.state);
+                }
+                connection.NewRoosterMessage -= Connection_ConnectionNewRoosterMessage;
+                connection.ConnectionStateChanged -= Connection_ConnectionStateChanged;
+                connection.NewValidMessage -= Connection_ConnectionNewValidMessage;
+                connection.NewPresenceMessage -= Connection_ConnectionNewPresenceMessage;
+                connection.MessageSend -= Connection_MessageSend;
+                connection.NewBookmarksResultMessage -= Connection_NewBookmarksResultMessage;
+                connection.OmemoSessionBuildError -= Connection_OmemoSessionBuildErrorEvent;
+            }
+
+            init(account);
+        }
+
+        public void Dispose()
+        {
+            connectDisconnectTCS?.TrySetResult(false);
+        }
+
+        #endregion
+        //--------------------------------------------------------Misc Methods:---------------------------------------------------------------\\
+        #region --Misc Methods (Public)--
+        public async Task connectAsync(bool holdConnection = true)
+        {
+            if (!(connectDisconnectTCS is null))
+            {
+                connectDisconnectTCS?.TrySetResult(false);
+                await connectDisconnectTCS.Task;
+            }
+            connectDisconnectTCS = new TaskCompletionSource<bool>();
+
+            Logger.Info("Connecting account: " + getXMPPAccount().getBareJid());
+            this.holdConnection = holdConnection;
+            try
+            {
+                await connection.ConnectAsync();
+                await connectDisconnectTCS.Task;
+            }
+            catch (Exception e)
+            {
+                Logger.Error("Error during connectAsync in XMPPClient!", e);
+            }
+        }
+
+        public Task reconnectAsync()
+        {
+            Logger.Info("Reconnecting account: " + getXMPPAccount().getBareJid());
+            return  connection.ReconnectAsync(true);
+        }
+
+        public Task disconnectAsync()
+        {
+            Logger.Info("Disconnecting account: " + getXMPPAccount().getBareJid());
+            holdConnection = false;
+            return connection.DisconnectAsync();
+        }
+
+        public async Task sendOmemoMessageAsync(OmemoEncryptedMessage msg, string chatJid, string accountJid, bool trustedSrcKeysOnly, bool trustedDstKeysOnly)
+        {
+            if (connection.omemoHelper is null)
+            {
+                OmemoSessionBuildError?.Invoke(this, new OmemoSessionBuildErrorEventArgs(chatJid, Network.XML.Messages.XEP_0384.Session.OmemoSessionBuildError.KEY_ERROR, new List<OmemoEncryptedMessage> { msg }));
+                Logger.Error("Failed to send OMEMO message - OmemoHelper is null");
+            }
+            else
+            {
+                await connection.omemoHelper.sendOmemoMessageAsync(msg, accountJid, chatJid, trustedSrcKeysOnly, trustedDstKeysOnly);
+            }
+        }
+
+        public Task<bool> SendAsync(AbstractMessage msg)
+        {
+            return connection.SendAsync(msg);
+        }
+
+        public XMPPAccount getXMPPAccount()
+        {
+            return connection.account;
+        }
+
+        /// <summary>
+        /// Enables OMEMO encryption for messages for this connection.
+        /// Has to be enabled before connecting.
+        /// </summary>
+        /// <param name="omemoStore">A persistent store for all the OMEMO related data (e.g. device ids and keys).</param>
+        /// <returns>Returns true on success.</returns>
+        public bool enableOmemo(IExtendedOmemoStorage omemoStore)
+        {
+            return connection.EnableOmemo(omemoStore);
+        }
+
+        #endregion
+
+        #region --Misc Methods (Private)--
+        private void init(XMPPAccount account)
+        {
+            connection = new XmppConnection(account);
+            connection.NewRoosterMessage += Connection_ConnectionNewRoosterMessage;
+            connection.ConnectionStateChanged += Connection_ConnectionStateChanged;
+            connection.NewValidMessage += Connection_ConnectionNewValidMessage;
+            connection.NewPresenceMessage += Connection_ConnectionNewPresenceMessage;
+            connection.MessageSend += Connection_MessageSend;
+            connection.NewBookmarksResultMessage += Connection_NewBookmarksResultMessage;
+            connection.OmemoSessionBuildError += Connection_OmemoSessionBuildErrorEvent;
+        }
+
+     
+
+        private async Task StartReconnectTimer()
+        {
+            await Task.Delay(reconnectDelay);
+            await  OnReconnectTimerTimeoutAsync();
+            Logger.Info("Started a reconnect timer for: " + connection.account.getBareJid());
+        }
+
+        #endregion
+
+        #region --Misc Methods (Protected)--
+
+
+        #endregion
+        //--------------------------------------------------------Events:---------------------------------------------------------------------\\
+        #region --Events--
+        private void Connection_ConnectionNewRoosterMessage(IMessageSender sender, NewValidMessageEventArgs args)
+        {
+            NewRoosterMessage?.Invoke(this, args);
+        }
+
+        private void Connection_ConnectionStateChanged(AbstractConnection sender, ConnectionStateChangedEventArgs args)
+        {
+            if (args.newState == ConnectionState.CONNECTED)
+            {
+                connectDisconnectTCS?.TrySetResult(true);
+                Logger.Info("Connected to account: " + getXMPPAccount().getBareJid());
+            }
+            else if (args.newState == ConnectionState.DISCONNECTED)
+            {
+                connectDisconnectTCS?.TrySetResult(false);
+                Logger.Info("Disconnected account: " + getXMPPAccount().getBareJid());
+            }
+            else if (args.newState == ConnectionState.ERROR)
+            {
+                connectDisconnectTCS?.TrySetResult(false);
+
+                if (holdConnection)
+                {
+                    StartReconnectTimer().Wait();
+                }
+            }
+
+            ConnectionStateChanged?.Invoke(this, args);
+        }
+
+        private void Connection_ConnectionNewValidMessage(IMessageSender sender, NewValidMessageEventArgs args)
+        {
+            AbstractMessage msg = args.MESSAGE;
+            if (msg is MessageMessage mMsg)
+            {
+                NewChatMessage?.Invoke(this, new NewChatMessageEventArgs(mMsg));
+            }
+            else if (msg is ChatStateMessage sMsg)
+            {
+                NewChatState?.Invoke(this, new NewChatStateEventArgs(sMsg));
+            }
+            else if (msg is DeliveryReceiptMessage dRMsg)
+            {
+                NewDeliveryReceipt?.Invoke(this, new NewDeliveryReceiptEventArgs(dRMsg));
+            }
+            else if (msg is AbstractPubSubEventMessage pubSubEventMsg)
+            {
+                NewPubSubEvent?.Invoke(this, new NewPubSubEventEventArgs(pubSubEventMsg));
+            }
+
+            NewValidMessage?.Invoke(this, args);
+        }
+
+        private void Connection_ConnectionNewPresenceMessage(IMessageSender connection, NewValidMessageEventArgs args)
+        {
+            // XEP-0045 (MUC member presence):
+            if (args.MESSAGE is MUCMemberPresenceMessage mucPresence)
+            {
+                NewMUCMemberPresenceMessage?.Invoke(this, new NewMUCMemberPresenceMessageEventArgs(mucPresence));
+            }
+            else if (args.MESSAGE is MUCPresenceErrorMessage mucPresenceError)
+            {
+                NewMUCPresenceErrorMessage?.Invoke(this, new NewMUCPresenceErrorMessageEventArgs(mucPresenceError));
+            }
+            else
+            {
+                NewPresence?.Invoke(this, new NewPresenceMessageEventArgs(args.MESSAGE as PresenceMessage));
+            }
+        }
+
+        private void Connection_MessageSend(XmppConnection sender, MessageSendEventArgs args)
+        {
+            MessageSend?.Invoke(this, args);
+        }
+
+        private void Connection_NewBookmarksResultMessage(XmppConnection sender, NewBookmarksResultMessageEventArgs args)
+        {
+            NewBookmarksResultMessage?.Invoke(this, args);
+        }
+
+        private void Connection_OmemoSessionBuildErrorEvent(XmppConnection sender, OmemoSessionBuildErrorEventArgs args)
+        {
+            OmemoSessionBuildError?.Invoke(this, args);
+        }
+
+        private Task OnReconnectTimerTimeoutAsync()
+        {
+            if (!holdConnection)
+            {
+                return null;
+            }
+            Logger.Debug("Reconnect timer triggered for:" + connection.account.getBareJid());
+            return connectAsync();
+        }
+
+        #endregion
+    }
+}

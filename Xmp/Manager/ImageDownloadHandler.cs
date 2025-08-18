@@ -1,0 +1,184 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
+using Logging;
+using Shared.Network;
+using Storage.Classes;
+using Storage.Contexts;
+using Storage.Models.Chat;
+
+namespace Manager
+{
+    public class ImageDownloadHandler
+    {
+        //--------------------------------------------------------Attributes:-----------------------------------------------------------------\\
+        #region --Attributes--
+        private readonly DownloadHandler DOWNLOAD_HANDLER;
+        private readonly SemaphoreSlim DOWNLOAD_SEMA = new SemaphoreSlim(1);
+
+        #endregion
+        //--------------------------------------------------------Constructor:----------------------------------------------------------------\\
+        #region --Constructors--
+        public ImageDownloadHandler(DownloadHandler downloadHandler)
+        {
+            DOWNLOAD_HANDLER = downloadHandler;
+            DOWNLOAD_HANDLER.DownloadStateChanged += OnDownloadStateChanged;
+        }
+
+        #endregion
+        //--------------------------------------------------------Set-, Get- Methods:---------------------------------------------------------\\
+        #region --Set-, Get- Methods--
+        public static DirectoryInfo GetCacheFolder(bool disableDownloadImagesToLibrary)
+        {
+            string basePath;
+
+            if (disableDownloadImagesToLibrary)
+            {
+                basePath = Path.Combine(
+                    Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                    "YourAppName",
+                    "cachedImages");
+            }
+            else
+            {
+                basePath = Path.Combine(
+                    Environment.GetFolderPath(Environment.SpecialFolder.MyPictures),
+                    "UWPX");
+            }
+
+            Directory.CreateDirectory(basePath);
+            return new DirectoryInfo(basePath);
+        }
+
+
+        #endregion
+        //--------------------------------------------------------Misc Methods:---------------------------------------------------------------\\
+        #region --Misc Methods (Public)--
+        public async Task StartDownloadAsync(ChatMessageImageReceivedModel image)
+        {
+            await DOWNLOAD_SEMA.WaitAsync();
+            if (image.state != DownloadState.DOWNLOADING && image.state != DownloadState.QUEUED)
+            {
+                await DOWNLOAD_HANDLER.EnqueueDownloadAsync(image);
+            }
+            DOWNLOAD_SEMA.Release();
+        }
+
+        public Task RedownloadAsync(ChatMessageImageReceivedModel image)
+        {
+            return DOWNLOAD_HANDLER.EnqueueDownloadAsync(image);
+        }
+
+        public void CancelDownload(ChatMessageImageReceivedModel image)
+        {
+            DOWNLOAD_HANDLER.CancelDownload(image);
+        }
+
+        public async Task<AbstractDownloadableObject> FindAsync(Predicate<AbstractDownloadableObject> predicate)
+        {
+            await DOWNLOAD_SEMA.WaitAsync();
+            AbstractDownloadableObject result = await DOWNLOAD_HANDLER.FindAsync(predicate);
+            DOWNLOAD_SEMA.Release();
+            return result;
+        }
+
+        public async Task ContinueDownloadsAsync()
+        {
+            if (!Settings.GetSettingBoolean(SettingsConsts.DISABLE_IMAGE_AUTO_DOWNLOAD))
+            {
+                IEnumerable<ChatMessageImageReceivedModel> images;
+                using (MainDbContext ctx = new MainDbContext())
+                {
+                    images = ctx.ChatMessageImageReceived.Where(i => i.state != DownloadState.DONE && i.state != DownloadState.ERROR && i.state != DownloadState.CANCELED).ToList();
+                }
+                foreach (ChatMessageImageReceivedModel image in images)
+                {
+                    if (image.state == DownloadState.DOWNLOADING || image.state == DownloadState.QUEUED)
+                    {
+                        image.state = DownloadState.NOT_QUEUED;
+                        image.Update();
+                    }
+                    await StartDownloadAsync(image);
+                }
+            }
+        }
+
+        public async Task ClearCacheAsync(bool disableDownloadImagesToLibrary)
+        {
+            var folder = GetCacheFolder(disableDownloadImagesToLibrary);
+            if (folder.Exists)
+            {
+                folder.Delete(true); // true = recursive delete
+            }
+
+            // Recreate the folder
+            Directory.CreateDirectory(folder.FullName);
+            Console.WriteLine("Image cache cleared!");
+        }
+
+
+        public void OpenCacheFolder(bool disableDownloadImagesToLibrary)
+        {
+            string folderPath = GetCacheFolder(disableDownloadImagesToLibrary).FullName;
+
+            try
+            {
+                
+                //Todo: redo
+                Process.Start(new ProcessStartInfo
+                {
+                    FileName = folderPath,
+                    UseShellExecute = true
+                });
+            }
+            catch (Exception ex)
+            {
+                // Handle error (e.g., log it)
+                Console.WriteLine($"Failed to open folder: {ex.Message}");
+            }
+        }
+
+
+        /// <summary>
+        /// Creates an unique file name, bases on the given url and the current time.
+        /// </summary>
+        /// <param name="url">The url of the image.</param>
+        /// <returns>Returns an unique file name.</returns>
+        public string CreateUniqueFileName(string url)
+        {
+            string name = DateTime.Now.ToString("dd.MM.yyyy_HH.mm.ss.ffff");
+            int index = url.LastIndexOf('.');
+            string ending = url.Substring(index, url.Length - index);
+            return name + ending;
+        }
+
+        #endregion
+
+        #region --Misc Methods (Private)--
+
+
+        #endregion
+
+        #region --Misc Methods (Protected)--
+
+
+        #endregion
+        //--------------------------------------------------------Events:---------------------------------------------------------------------\\
+        #region --Events--
+        private void OnDownloadStateChanged(AbstractDownloadableObject o, DownloadStateChangedEventArgs args)
+        {
+            if (o is ChatMessageImageReceivedModel image)
+            {
+                using (MainDbContext ctx = new MainDbContext())
+                {
+                    ctx.Update(image);
+                }
+            }
+        }
+
+        #endregion
+    }
+}
