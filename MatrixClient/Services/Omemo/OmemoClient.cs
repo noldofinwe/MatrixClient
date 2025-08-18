@@ -37,24 +37,24 @@ public class OmemoClient
 
   public void CreateSession(Jid jid, OmemoContactKeyBundle contactBundle)
   {
-    sessionManager.GetOrCreateSession(jid, contactBundle);
+    sessionManager.GetOrCreateSession(jid.Bare, contactBundle);
   }
   public async Task HandleMessage(Message el)
   {
-    var xmppMessage = XmppMessage.FromMessage(el);
+    var xmppMessage = XmppMessage.FromMessage(el, DeviceId);
 
     if (xmppMessage.OmemoEncrypted)
     {
-      if (sessionManager.HasSession(xmppMessage.From, xmppMessage.DeviceId))
+      if (sessionManager.HasSession(xmppMessage.From, xmppMessage.SenderDeviceId))
       {
-        var test = sessionManager.Decrypt(el.From, xmppMessage.DeviceId, xmppMessage.EncryptedPayload);
+        var test = sessionManager.Decrypt(el.From, xmppMessage.SenderDeviceId, xmppMessage.EncryptedPayload);
 
 
       }
       else
       {
         var pubSub = new PubSubManager(xmppClient);
-        var bundles = await pubSub.GetBundleAsync(el.From, xmppMessage.DeviceId);
+        var bundles = await pubSub.GetBundleAsync(el.From, xmppMessage.SenderDeviceId);
         if (bundles == null || bundles.Count == 0)
         {
           // No bundles found, handle accordingly (e.g., log, notify user, etc.)
@@ -67,7 +67,7 @@ public class OmemoClient
 
 
         }
-        var test = sessionManager.Decrypt(el.From, xmppMessage.DeviceId, xmppMessage.Body);
+        var test = sessionManager.Decrypt(el.From, xmppMessage.SenderDeviceId, xmppMessage.EncryptedPayload);
       }
     }
   }

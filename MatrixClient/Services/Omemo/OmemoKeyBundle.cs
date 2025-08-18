@@ -101,7 +101,12 @@ public class OmemoKeyBundle
 
     public static X25519PublicKeyParameters ParsePublicKey(string base64)
     {
-        byte[] keyBytes = Convert.FromBase64String(base64);
+    if (string.IsNullOrWhiteSpace(base64))
+    {
+      return null;
+    }
+
+    byte[] keyBytes = Convert.FromBase64String(base64);
 
         if (keyBytes.Length == 33 && keyBytes[0] == 0x05)
             keyBytes = keyBytes.Skip(1).ToArray();

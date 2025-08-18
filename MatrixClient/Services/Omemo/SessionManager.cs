@@ -39,7 +39,7 @@ public class SessionManager
           senderEphemeralKey,
           OmemoKeyBundle.ParsePublicKey(contactBundle.IdentityKey),
           OmemoKeyBundle.ParsePublicKey(contactBundle.SignedPreKey),
-          null // optional
+          OmemoKeyBundle.ParsePublicKey(contactBundle.PreKeys.FirstOrDefault()) // Use first prekey if available, otherwise pass
       );
 
       // Initialize Double Ratchet session

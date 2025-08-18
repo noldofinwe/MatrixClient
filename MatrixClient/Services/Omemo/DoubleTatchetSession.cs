@@ -9,6 +9,7 @@ using Org.BouncyCastle.Crypto.Parameters;
 using Org.BouncyCastle.Security;
 using System;
 using System.Diagnostics;
+using System.Text;
 
 /*
  *
@@ -26,6 +27,7 @@ public class DoubleRatchetSession
   public byte[] ReceiveChainKey { get; private set; }
 
   public int RemoteDeviceId { get; set; }
+  public bool Sending { get; }
   public AsymmetricCipherKeyPair DHKeyPair { get; private set; }
   public AsymmetricKeyParameter RemoteDHKey { get; private set; }
 
@@ -111,10 +113,6 @@ public class DoubleRatchetSession
   {
     byte[] encrypted = Convert.FromBase64String(ciphertextBase64);
 
-    // Advance receive chain key
-    //ReceiveChainKey = HKDF(ReceiveChainKey, "MessageKey");
-
-    byte[] key = ReceiveChainKey;
     byte[] iv = new byte[12];
     byte[] ciphertext = new byte[encrypted.Length - 12 - 16];
     byte[] tag = new byte[16];
@@ -122,23 +120,34 @@ public class DoubleRatchetSession
     Buffer.BlockCopy(encrypted, 0, iv, 0, 12);
     Buffer.BlockCopy(encrypted, 12, ciphertext, 0, ciphertext.Length);
     Buffer.BlockCopy(encrypted, 12 + ciphertext.Length, tag, 0, 16);
-    Debug.WriteLine("Encrypted length: " + encrypted.Length);
 
-    // Combine ciphertext + tag
     byte[] ciphertextWithTag = new byte[ciphertext.Length + tag.Length];
     Buffer.BlockCopy(ciphertext, 0, ciphertextWithTag, 0, ciphertext.Length);
     Buffer.BlockCopy(tag, 0, ciphertextWithTag, ciphertext.Length, tag.Length);
 
-    // Decrypt
+
+    // Derive message key and advance chain key
+    byte[] messageKey = HKDF(ReceiveChainKey, "MessageKey");
+    ReceiveChainKey = HKDF(ReceiveChainKey, "ChainKey");
+
+    Debug.WriteLine(ciphertextBase64);
+    Debug.WriteLine($"IV: {Convert.ToBase64String(iv)}");
+    Debug.WriteLine($"Ciphertext: {Convert.ToBase64String(ciphertextWithTag)}");
+    Debug.WriteLine($"Tag: {Convert.ToBase64String(tag)}");
+    Debug.WriteLine($"Message Key: {Convert.ToBase64String(messageKey)}");
+
     var cipher = new GcmBlockCipher(new AesEngine());
-    cipher.Init(false, new AeadParameters(new KeyParameter(key), 128, iv));
+    cipher.Init(false, new AeadParameters(new KeyParameter(messageKey), 128, iv));
 
     byte[] output = new byte[cipher.GetOutputSize(ciphertextWithTag.Length)];
     int len = cipher.ProcessBytes(ciphertextWithTag, 0, ciphertextWithTag.Length, output, 0);
-    cipher.DoFinal(output, len);
+    int finalLen = cipher.DoFinal(output, len);
 
-    return System.Text.Encoding.UTF8.GetString(output);
+    byte[] plaintext = new byte[len + finalLen];
+    Buffer.BlockCopy(output, 0, plaintext, 0, plaintext.Length);
 
+    return Encoding.UTF8.GetString(plaintext);
   }
+
 
 }

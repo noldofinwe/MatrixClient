@@ -126,7 +126,7 @@ namespace MatrixClient.Services
             IsSuccess = true,
             Complete = final.Complete,
             Last = final.ResultSet.Last,
-            First = final.ResultSet.First.Value
+            First = final.ResultSet.First != null ? final.ResultSet.First.Value : null,
           };
         }
       }
