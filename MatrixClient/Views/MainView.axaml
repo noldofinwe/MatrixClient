@@ -28,10 +28,10 @@
                             BorderBrush="Gray" BorderThickness="1"
                             Padding="5">
                         <StackPanel Orientation="Horizontal">
-                          <Image Source="{Binding Avatar}" Width="64" Height="64" />
+                          <!--<Image Source="{Binding Avatar}" Width="64" Height="64" />
 
                           <TextBlock Margin="5 0" FontWeight="Bold"
-                                       Text="{Binding FriendlyName}" />
+                                       Text="{Binding FriendlyName}" />-->
                             
                         </StackPanel>
                     </Border>

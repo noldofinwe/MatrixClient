@@ -553,9 +553,9 @@ namespace XmppApi.Network.XML
                 messages.Add(new ChatStateMessage(n));
             }
 
-            // XEP-0384 (OMEMO Encryption):
+            // XEP-0384 (OMEMO Encryption): Only supports Omemo2
             if (XMLUtils.getChildNode(n, "encrypted", Consts.XML_XMLNS, Consts.XML_XEP_0384_NAMESPACE) != null)
-            {
+      {
                 messages.Add(new OmemoEncryptedMessage(n, ccType));
             }
             // XEP-0184 (Message Delivery Receipts):

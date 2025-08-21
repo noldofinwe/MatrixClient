@@ -10,7 +10,7 @@
              x:DataType="viewModels:RoomViewModel">
 
   <Grid RowDefinitions="Auto,*, Auto" ColumnDefinitions="*,Auto">
-    <StackPanel>
+    <!--<StackPanel>
       <TextBlock Text="{Binding RoomName}"></TextBlock>
       <TextBlock Text="{Binding Activity}"></TextBlock>
       <Button Content="Add As Contact" Command="{Binding AddToRoster}" IsVisible="{Binding InvitedRoom}" />
@@ -54,7 +54,7 @@
       </ItemsControl>
     </ScrollViewer>
     <TextBox  Grid.Row="2" Text="{Binding MessageToSend}"></TextBox>
-    <Button Grid.Row="2" Grid.Column="1" Content="Send" Command="{Binding SendMessage}"/>
+    <Button Grid.Row="2" Grid.Column="1" Content="Send" Command="{Binding SendMessage}"/>-->
 
   </Grid>
 </UserControl>
