@@ -159,7 +159,11 @@ namespace Manager.Chat
 
             using (MainDbContext ctx = new MainDbContext())
             {
-                return ctx.Chats.Where(c => c.chatType == ChatType.MUC && string.Equals(c.accountBareJid, accountBareJid)).Select(c => c.muc).Include(ctx.GetIncludePaths(typeof(MucInfoModel))).ToList();
+                return ctx.Chats
+                    .Where(c => c.chatType == ChatType.MUC && string.Equals(c.accountBareJid, accountBareJid))
+                    .ToList()
+                    .Select(c => c.muc)
+                    .ToList();
             }
         }
 

@@ -62,26 +62,26 @@ namespace XmppApi.Network
             Logger.Debug("[" + GetType().Name + "] " + oldState + " -> " + newState + ": " + s);
         }
 
-        #endregion
-        //--------------------------------------------------------Misc Methods:---------------------------------------------------------------\\
-        #region --Misc Methods (Public)--
+    #endregion
+    //--------------------------------------------------------Misc Methods:---------------------------------------------------------------\\
+    #region --Misc Methods (Public)--
 
 
-        #endregion
+    #endregion
 
-        #region --Misc Methods (Private)--
-
-
-        #endregion
-
-        #region --Misc Methods (Protected)--
+    #region --Misc Methods (Private)--
 
 
-        #endregion
-        //--------------------------------------------------------Events:---------------------------------------------------------------------\\
-        #region --Events--
+    #endregion
+
+    #region --Misc Methods (Protected)--
+ 
+
+    #endregion
+    //--------------------------------------------------------Events:---------------------------------------------------------------------\\
+    #region --Events--
 
 
-        #endregion
-    }
+    #endregion
+  }
 }

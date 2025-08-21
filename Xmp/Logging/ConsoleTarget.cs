@@ -25,7 +25,7 @@ namespace Logging
         #region --Misc Methods (Public)--
         protected override void Write(LogEventInfo logEvent)
         {
-            Debug.WriteLine(Layout.Render(logEvent));
+           // Debug.WriteLine(Layout.Render(logEvent));
         }
 
         #endregion

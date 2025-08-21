@@ -375,7 +375,7 @@ namespace Manager.Chat
                 CancelTimer();
             }
             //todo? fix
-            messageDateUpdateTimer = new Timer(async _ => await OnDateTimerTimeout(), null, MESSAGE_DATE_UPDATE_TIMEOUT, TimeSpan.MaxValue);
+            messageDateUpdateTimer = new Timer(async _ => await OnDateTimerTimeout(), null, MESSAGE_DATE_UPDATE_TIMEOUT, TimeSpan.FromSeconds(10));
         }
 
         #endregion

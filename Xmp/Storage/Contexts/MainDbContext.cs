@@ -117,8 +117,17 @@ namespace Storage.Contexts
                 {
                     try
                     {
-                        entry.OriginalValues.SetValues(entry.GetDatabaseValues());
-                        SaveChanges();
+                        var dbValues = entry.GetDatabaseValues();
+                        if (dbValues != null)
+                        {
+                            entry.OriginalValues.SetValues(dbValues);
+                            SaveChanges();
+                        }
+                        else
+                        {
+                            Logger.Error($"Entity '{entry.Entity.GetType()}' no longer exists in the database.");
+                            // Optionally, handle deletion or remove the entry from context
+                        }
                     }
                     catch (Exception e)
                     {

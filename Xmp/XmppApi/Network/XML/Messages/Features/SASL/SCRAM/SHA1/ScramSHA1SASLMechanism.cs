@@ -50,36 +50,25 @@ namespace XmppApi.Network.XML.Messages.Features.SASL.SCRAM.SHA1
             {
                 serverFirstMsg = decodeStringBase64(challenge.CHALLENGE);
 
+                // Instead of expecting exactly 3 parts, loop through all parts and extract required fields
                 string[] parts = serverFirstMsg.Split(',');
-                if (parts.Length != 3)
+                string sNonce = null, saltTemp = null, itersStr = null;
+                foreach (var part in parts)
                 {
-                    onSaslError("SCRAM-SHA: Invalid server first message received: " + serverFirstMsg);
+                    if (part.StartsWith("r=")) sNonce = part.Substring(2);
+                    else if (part.StartsWith("s=")) saltTemp = part.Substring(2);
+                    else if (part.StartsWith("i=")) itersStr = part.Substring(2);
+                    // ignore other fields
+                }
+                if (sNonce == null || saltTemp == null || itersStr == null)
+                {
+                    onSaslError("SCRAM-SHA: Missing required fields in server first message: " + serverFirstMsg);
                     return null;
                 }
 
-                string sNonce = parts[0];
-                if (!sNonce.StartsWith("r="))
-                {
-                    onSaslError("SCRAM-SHA: Invalid order for server first message received: " + serverFirstMsg);
-                    return null;
-                }
-                serverNonce = sNonce.Substring(2);
+                serverNonce = sNonce;
+                saltBase64 = saltTemp;
 
-                string saltTemp = parts[1];
-                if (!saltTemp.StartsWith("s="))
-                {
-                    onSaslError("SCRAM-SHA: Invalid order for server first message received: " + serverFirstMsg);
-                    return null;
-                }
-                saltBase64 = saltTemp.Substring(2);
-
-                string itersStr = parts[2];
-                if (!itersStr.StartsWith("i="))
-                {
-                    onSaslError("SCRAM-SHA: Invalid order for server first message received: " + serverFirstMsg);
-                    return null;
-                }
-                itersStr = itersStr.Substring(2);
                 int iters = -1;
                 if (!int.TryParse(itersStr, out iters))
                 {

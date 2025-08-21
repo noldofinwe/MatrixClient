@@ -22,7 +22,7 @@ namespace Logging
         #region --Constructors--
         static Logger()
         {
-            Target.Register<ConsoleTarget>(nameof(ConsoleTarget));
+            //Target.Register<ConsoleTarget>(nameof(ConsoleTarget));
            // LogManager.Configuration = new XmlLoggingConfiguration(Path.Combine(Package.Current.InstalledLocation.Path, @"Logging\NLog.config"));
             //LogManager.Configuration.Variables["LogPath"] = getLogsFolderPath();
             //LogManager.Configuration.Variables["LogArchivePath"] = GetLogsArchivePath();
